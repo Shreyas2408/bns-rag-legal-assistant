@@ -38,8 +38,13 @@ def main():
     sections = load_data(INPUT_PATH)
     all_chunks = []
 
+    print("Starting Chunking process...")
     for section in tqdm(sections):
-        chunks = chunk_text(section["content"])
+        # Safety check: skip if content is missing or empty
+        if "content" not in section or not section["content"]:
+            continue
+            
+        chunks = chunk_text(section["content"], CHUNK_SIZE, OVERLAP)
 
         for idx, chunk in enumerate(chunks):
             all_chunks.append({
@@ -49,9 +54,8 @@ def main():
                 "text": chunk
             })
 
-    print(f"Total Chunks Created: {len(all_chunks)}")
+    print(f"\nSuccess! Total Chunks Created: {len(all_chunks)}")
     save_data(all_chunks, OUTPUT_PATH)
-
 
 if __name__ == "__main__":
     main()

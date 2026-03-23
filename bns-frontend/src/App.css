@@ -1,0 +1,204 @@
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+/* --- Global Resets & Theme --- */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  background-color: #1a1a1c;
+  color: #e0e0e0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.rag-app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* --- Header --- */
+.rag-header {
+  background-color: #262629;
+  padding: 15px 30px;
+  border-bottom: 1px solid #333;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 10;
+}
+
+.rag-title {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: #d4af37; /* The Legal Gold */
+}
+
+.rag-status {
+  font-size: 0.9rem;
+  color: #888;
+}
+
+/* --- Chat Window --- */
+.rag-chat-window {
+  flex: 1; /* Occupies all available vertical space */
+  padding: 30px;
+  overflow-y: auto; /* Required for auto-scrolling */
+  background-color: #1a1a1c;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.rag-welcome {
+  text-align: center;
+  margin-top: 10vh;
+  color: #666;
+}
+
+/* --- Message Bubbles --- */
+.rag-message-row {
+  display: flex;
+  gap: 15px;
+  max-width: 80%;
+}
+
+.rag-message-row.user {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.rag-message-row.bot {
+  align-self: flex-start;
+}
+
+.rag-avatar {
+  font-size: 1.5rem;
+  margin-top: 5px;
+}
+
+.rag-message-bubble {
+  padding: 12px 18px;
+  border-radius: 12px;
+  line-height: 1.5;
+  font-size: 1rem;
+}
+
+.rag-message-row.user .rag-message-bubble {
+  background-color: #0056b3; /* User Blue */
+  border-bottom-right-radius: 4px;
+}
+
+.rag-message-row.bot .rag-message-bubble {
+  background-color: #2d2d30; /* Bot Dark Grey */
+  border-bottom-left-radius: 4px;
+}
+
+/* --- Markdown Styling inside Bubbles --- */
+.rag-markdown p { margin-bottom: 10px; }
+.rag-markdown strong { color: #d4af37; font-weight: bold; }
+.rag-markdown ul, .rag-markdown ol { margin-left: 20px; margin-bottom: 10px; }
+.rag-markdown li { margin-bottom: 5px; }
+
+/* --- Loading Animation --- */
+.dot-flashing {
+  display: inline-block;
+  width: 10px; height: 10px;
+  border-radius: 5px;
+  background-color: #d4af37;
+  color: #d4af37;
+  animation: dotFlashing 1s infinite linear alternate;
+}
+
+@keyframes dotFlashing {
+  0% { opacity: 0.3; }
+  100% { opacity: 1; }
+}
+
+/* --- Input Area --- */
+.rag-input-area {
+  background-color: #262629;
+  padding: 20px 30px;
+  border-top: 1px solid #333;
+  display: flex;
+  gap: 15px;
+  align-items: flex-end;
+}
+
+.rag-input-area textarea {
+  flex: 1;
+  background-color: #333;
+  border: 1px solid #444;
+  color: white;
+  padding: 12px;
+  border-radius: 8px;
+  resize: none;
+  font-size: 1rem;
+}
+
+.rag-input-area textarea:focus {
+  outline: none;
+  border-color: #d4af37;
+}
+
+.rag-send-btn {
+  background-color: #d4af37;
+  color: #1a1a1c;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.rag-send-btn:hover:not(:disabled) {
+  background-color: #c49f31;
+}
+
+.rag-send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

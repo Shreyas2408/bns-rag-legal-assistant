@@ -1,11 +1,14 @@
 import fitz
 import re
 import json
+import os
 
-PDF_PATH = "data/250883_english_01042024.pdf"  # update path if needed
+PDF_PATH = "data/250883_english_01042024.pdf"
 OUTPUT_PATH = "data/bns_sections.json"
 
 def extract_text(pdf_path):
+    if not os.path.exists(pdf_path):
+        raise FileNotFoundError(f"PDF not found at {pdf_path}")
     doc = fitz.open(pdf_path)
     text = ""
     for page in doc:
@@ -13,80 +16,46 @@ def extract_text(pdf_path):
     return text
 
 def clean_text(text):
-    # Remove standalone page numbers
-    text = re.sub(r'\n\d+\n', '\n', text)
-
-    # Remove excess spaces
-    text = re.sub(r'[ \t]+', ' ', text)
-
-    # Normalize multiple line breaks
+    # Remove the side-notes like "Short title, commencement and application"
+    # These often appear as separate lines in PDF extraction
     text = re.sub(r'\n{2,}', '\n\n', text)
-
     return text
 
-def remove_arrangement_section(text):
-    start_index = text.find("CHAPTER I")
-    return text[start_index:]
-
-def split_chapters(text):
-    # Split by CHAPTER headings
-    chapters = re.split(r'\n(?=CHAPTER\s+[IVXLCDM]+)', text)
-    return chapters
-
-def split_sections(chapter_text):
-    # Split by section numbers (e.g., "1. ", "2. ")
-    sections = re.split(r'\n(?=\d+\.\s)', chapter_text)
-    return sections
-
-def parse_section(section_text):
-    match = re.match(r'(\d+)\.\s+(.*)', section_text.strip())
-    if match:
-        section_id = match.group(1)
-        rest = section_text.strip()[len(match.group(0)):]
-        return section_id, match.group(2), rest.strip()
-    return None, None, None
-
 def main():
+    print("🚀 Starting Extraction...")
     raw_text = extract_text(PDF_PATH)
-    cleaned_text = clean_text(raw_text)
-    main_text = remove_arrangement_section(cleaned_text)
-    chapters_raw = split_chapters(main_text)
+    
+    # Split by CHAPTER
+    chapters_raw = re.split(r'CHAPTER\s+[IVXLCDM]+', raw_text)
+    all_sections_flat = []
 
-    structured_chapters = []
-
-    for chap in chapters_raw:
-        lines = chap.strip().split("\n", 2)
-        if len(lines) >= 2:
-            chapter_heading = lines[0].strip()
-            chapter_title = lines[1].strip()
-        else:
-            chapter_heading = lines[0].strip()
-            chapter_title = ""
-
-        sections_raw = split_sections(chap)
-        structured_sections = []
-
-        for section in sections_raw:
-            section_id, title, content = parse_section(section)
-            if section_id:
-                structured_sections.append({
+    for idx, chap in enumerate(chapters_raw):
+        if idx == 0: continue # Skip text before Chapter 1
+        
+        # Look for patterns like "1. (1)" or "2. " at the start of a line
+        # The regex below looks for: Start of line -> Number -> Period -> Space
+        sections_raw = re.split(r'\n(?=\d+\.\s)', chap)
+        
+        for sec_text in sections_raw:
+            # Match: SectionNumber. Title/Content
+            match = re.search(r'^(\d+)\.\s+(.*)', sec_text.strip(), re.DOTALL)
+            if match:
+                section_id = match.group(1)
+                content = match.group(2).strip()
+                
+                # Use the first line as a temporary title
+                title = content.split('\n')[0][:100] 
+                
+                all_sections_flat.append({
                     "section_id": section_id,
-                    "title": title.strip(),
-                    "content": content.strip()
+                    "title": title,
+                    "content": content
                 })
 
-        structured_chapters.append({
-            "chapter_heading": chapter_heading,
-            "chapter_title": chapter_title,
-            "sections": structured_sections
-        })
-
-    print(f"Total Chapters Extracted: {len(structured_chapters)}")
-    total_sections = sum(len(ch["sections"]) for ch in structured_chapters)
-    print(f"Total Sections Extracted: {total_sections}")
+    print(f"✅ Extracted {len(all_sections_flat)} sections.")
 
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
-        json.dump(structured_chapters, f, indent=4, ensure_ascii=False)
+        json.dump(all_sections_flat, f, indent=4, ensure_ascii=False)
 
 if __name__ == "__main__":
     main()
