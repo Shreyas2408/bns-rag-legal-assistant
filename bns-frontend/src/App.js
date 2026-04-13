@@ -7,6 +7,7 @@ function App() {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null); // Ref for auto-scrolling
+  const [showIntro, setShowIntro] = useState(true);
 
   // Auto-scroll to the bottom when a new message arrives
   useEffect(() => {
@@ -27,7 +28,14 @@ function App() {
         body: JSON.stringify({ prompt: input }),
       });
       const data = await res.json();
-      setMessages([...newMessages, { role: "bot", text: data.response }]);
+      setMessages([
+        ...newMessages,
+        {
+          role: "bot",
+          type: "result",
+          data: data
+        }
+      ]);
     } catch (err) {
       setMessages([...newMessages, { role: "bot", text: "Error: Is your backend running?" }]);
     }
@@ -35,64 +43,109 @@ function App() {
   };
 
   return (
-    <div className="rag-app">
-      {/* 1. App Header */}
-      <header className="rag-header">
-        <div className="rag-title">⚖️ RAGLegal BNS Assistant</div>
-        <div className="rag-status">Bharatiya Nyaya Sanhita (2023) • AI Grounded in Law</div>
-      </header>
-
-      {/* 2. Chat Window (Auto-scrolling) */}
-      <main className="rag-chat-window">
-        {messages.length === 0 && (
-          <div className="rag-welcome">
-            <h3>Ready to assist with BNS Legal Queries.</h3>
-            <p>Example: "What is the penalty for medical negligence?"</p>
+    <>
+      {showIntro && (
+        <div className="intro-overlay">
+          <div className="intro-modal">
+            
+            <h2>👋 Welcome to RAGLegal BNS Assistant</h2>
+            
+            <p>
+              This project uses <b>Retrieval-Augmented Generation (RAG)</b> to analyze
+              legal scenarios based on the <b>Bharatiya Nyaya Sanhita (2023)</b>.
+            </p>
+      
+            <p>
+              🔍 It retrieves relevant legal sections <br />
+              🤖 Uses AI to explain applicable laws <br />
+              ⚖️ Helps you understand legal outcomes
+            </p>
+      
+            <button onClick={() => setShowIntro(false)}>
+              Try Now 🚀
+            </button>
+      
           </div>
-        )}
-        
-        {messages.map((m, i) => (
-          <div key={i} className={`rag-message-row ${m.role}`}>
-            <div className="rag-avatar">{m.role === "user" ? "👤" : "🏛️"}</div>
-            <div className="rag-message-bubble">
-              {/* ReactMarkdown renders bolding, lists, and newlines correctly */}
-              <div className="rag-markdown">
-                <ReactMarkdown>{m.text}</ReactMarkdown>
+        </div>
+      )}
+
+      <div className="rag-app">
+        {/* 1. App Header */}
+        <header className="rag-header">
+          <div className="rag-title">⚖️ RAGLegal BNS Assistant</div>
+          <div className="rag-status">Bharatiya Nyaya Sanhita (2023) • AI Grounded in Law</div>
+        </header>
+
+        {/* 2. Chat Window */}
+        <main className="rag-chat-window">
+          {messages.length === 0 && (
+            <div className="rag-welcome">
+              <h3>Ready to assist with BNS Legal Queries.</h3>
+              <p>Example: "What is the penalty for medical negligence?"</p>
+            </div>
+          )}
+          
+          {messages.map((m, i) => (
+            <div key={i} className={`rag-message-row ${m.role}`}>
+              <div className="rag-avatar">{m.role === "user" ? "👤" : "🏛️"}</div>
+              <div className="rag-message-bubble">
+                <div className="rag-markdown">
+                  {m.type === "result" ? (
+                    <div>
+
+                      <h4>📚 Retrieved Legal Context</h4>
+                      {m.data.retrieved_context.map((item, i) => (
+                        <div key={i} style={{ marginBottom: "10px" }}>
+                          <b>Section {item.section}</b>
+                          <div>Score: {item.score.toFixed(3)}</div>
+                          <div>{item.text}</div>
+                        </div>
+                      ))}
+
+                      <h4>🤖 Analysis</h4>
+                      <pre>{m.data.analysis.raw}</pre>
+
+                    </div>
+                  ) : (
+                    <ReactMarkdown>{m.text}</ReactMarkdown>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-        {loading && (
-          <div className="rag-message-row bot loading">
-            <div className="rag-avatar">🏛️</div>
-            <div className="rag-message-bubble">
-              <span className="dot-flashing"></span>
-            </div>
-          </div>
-        )}
-        {/* Dummy element for auto-scroll to focus on */}
-        <div ref={messagesEndRef} />
-      </main>
+          ))}
 
-      {/* 3. Input Area (Fixed at the Bottom) */}
-      <footer className="rag-input-area">
-        <textarea
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Enter a legal scenario for analysis..."
-          rows={input.split('\n').length > 3 ? 4 : input.split('\n').length || 1}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              handleSend();
-            }
-          }}
-        />
-        <button className="rag-send-btn" onClick={handleSend} disabled={loading}>
-          {loading ? "..." : "Send"}
-        </button>
-      </footer>
-    </div>
+          {loading && (
+            <div className="rag-message-row bot loading">
+              <div className="rag-avatar">🏛️</div>
+              <div className="rag-message-bubble">
+                <span className="dot-flashing"></span>
+              </div>
+            </div>
+          )}
+
+          <div ref={messagesEndRef} />
+        </main>
+
+        {/* 3. Input Area */}
+        <footer className="rag-input-area">
+          <textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Enter a legal scenario for analysis..."
+            rows={input.split('\n').length > 3 ? 4 : input.split('\n').length || 1}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
+          />
+          <button className="rag-send-btn" onClick={handleSend} disabled={loading}>
+            {loading ? "..." : "Send"}
+          </button>
+        </footer>
+      </div>
+    </>
   );
 }
 
